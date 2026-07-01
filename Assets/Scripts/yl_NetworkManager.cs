@@ -3,7 +3,6 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.XR;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -193,14 +192,7 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
         ActivatePanel(InsideRoom_UI_Panel.name);
 
-        if (PhotonNetwork.LocalPlayer.IsMasterClient)
-        {
-            startGameButton.SetActive(true);
-        }
-        else
-        {
-            startGameButton.SetActive(false);
-        }
+        startGameButton.SetActive(PhotonNetwork.LocalPlayer.IsMasterClient);
 
         roomInfoText.text = "Room name: " + PhotonNetwork.CurrentRoom.Name + " " +
                             "Players/Max.players: " +
@@ -212,49 +204,47 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
             playerListGameobjects = new Dictionary<int, GameObject>();
         }
 
-        //Instantiate player list game gameobjects
         foreach (Player player in PhotonNetwork.PlayerList)
         {
             GameObject playerListGameobject = Instantiate(playerListPrefab);
             playerListGameobject.transform.SetParent(playerListContent.transform, false);
+            playerListGameobject.transform.SetAsLastSibling();
 
-            playerListGameobject.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = player.NickName;
+            Debug.Log("Player card created: " + player.NickName);
+            Debug.Log("Parent: " + playerListContent.name);
+            Debug.Log("Prefab active: " + playerListGameobject.activeSelf);
 
-            if (player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
-            {
-                playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(true);
+            playerListGameobject.transform.Find("PlayerNameText")
+                .GetComponent<TMP_Text>().text = player.NickName;
 
-            }
-            else
-            {
-                playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(false);
-            }
+            playerListGameobject.transform.Find("PlayerIndicator").gameObject
+                .SetActive(player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
+
             playerListGameobjects.Add(player.ActorNumber, playerListGameobject);
         }
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        //update room info text
         roomInfoText.text = "Room name: " + PhotonNetwork.CurrentRoom.Name + " " +
                             "Players/Max.players: " +
                             PhotonNetwork.CurrentRoom.PlayerCount + "/" +
                             PhotonNetwork.CurrentRoom.MaxPlayers;
 
         GameObject playerListGameobject = Instantiate(playerListPrefab);
-        playerListGameobject.transform.SetParent(playerListContent.transform);
-        playerListGameobject.transform.localScale = Vector3.one;
+        playerListGameobject.transform.SetParent(playerListContent.transform, false);
+        playerListGameobject.transform.SetAsLastSibling();
 
-        playerListGameobject.transform.Find("PlayerNameText").GetComponent<TMP_Text>().text = newPlayer.NickName;
+        Debug.Log("New player card created: " + newPlayer.NickName);
+        Debug.Log("Parent: " + playerListContent.name);
+        Debug.Log("Prefab active: " + playerListGameobject.activeSelf);
 
-        if (newPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
-        {
-            playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(true);
-        }
-        else
-        {
-            playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(false);
-        }
+        playerListGameobject.transform.Find("PlayerNameText")
+            .GetComponent<TMP_Text>().text = newPlayer.NickName;
+
+        playerListGameobject.transform.Find("PlayerIndicator").gameObject
+            .SetActive(newPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
+
         playerListGameobjects.Add(newPlayer.ActorNumber, playerListGameobject);
     }
 
@@ -283,49 +273,70 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnRoomListUpdate(List<RoomInfo> roomList)
     {
-        ClearRoomListView();
+        Debug.Log("OnRoomListUpdate called");
 
-        foreach (var roomListGameobject in roomListGameobjects.Values)
+        if (roomListEntryPrefab == null)
         {
-            Destroy(roomListGameobject);
+            Debug.LogError("roomListEntryPrefab is NOT assigned");
+            return;
         }
 
-        roomListGameobjects.Clear();
+        if (roomListParentGameobject == null)
+        {
+            Debug.LogError("roomListParentGameobject is NOT assigned");
+            return;
+        }
+
+        if (roomListGameobjects == null)
+            roomListGameobjects = new Dictionary<string, GameObject>();
+
+        if (cachedRoomList == null)
+            cachedRoomList = new Dictionary<string, RoomInfo>();
+
+        ClearRoomListView();
 
         foreach (RoomInfo room in roomList)
         {
-            Debug.Log(room.Name);
             if (!room.IsOpen || !room.IsVisible || room.RemovedFromList)
             {
                 if (cachedRoomList.ContainsKey(room.Name))
-                {
                     cachedRoomList.Remove(room.Name);
-                }
             }
             else
             {
-                //update cachedRoom list
-                if (cachedRoomList.ContainsKey(room.Name))
-                {
-                    cachedRoomList[room.Name] = room;
-                }
-                //add the new rooom to the cached room list
-                else
-                {
-                    cachedRoomList.Add(room.Name, room);
-                }
+                cachedRoomList[room.Name] = room;
             }
         }
 
         foreach (RoomInfo room in cachedRoomList.Values)
         {
-            GameObject roomListEntryGameobject = Instantiate(roomListEntryPrefab);
-            roomListEntryGameobject.transform.SetParent(roomListParentGameobject.transform);
-            roomListEntryGameobject.transform.localScale = Vector3.one;
+            GameObject roomListEntryGameobject = Instantiate(roomListEntryPrefab, roomListParentGameobject.transform, false);
 
-            roomListEntryGameobject.transform.Find("RoomNameText").GetComponent<TMP_Text>().text = room.Name;
-            roomListEntryGameobject.transform.Find("RoomPlayersText").GetComponent<TMP_Text>().text = room.PlayerCount + "/" + room.MaxPlayers;
-            roomListEntryGameobject.transform.Find("JoinRoomButton").GetComponent<Button>().onClick.AddListener(() => OnJoinRoomButtonClicked(room.Name));
+            Transform roomNameText = roomListEntryGameobject.transform.Find("RoomNameText");
+            Transform roomPlayersText = roomListEntryGameobject.transform.Find("RoomPlayersText");
+            Transform joinRoomButton = roomListEntryGameobject.transform.Find("JoinRoomButton");
+
+            if (roomNameText == null)
+            {
+                Debug.LogError("RoomNameText not found inside RoomListEntryPrefab");
+                return;
+            }
+
+            if (roomPlayersText == null)
+            {
+                Debug.LogError("RoomPlayersText not found inside RoomListEntryPrefab");
+                return;
+            }
+
+            if (joinRoomButton == null)
+            {
+                Debug.LogError("JoinRoomButton not found inside RoomListEntryPrefab");
+                return;
+            }
+
+            roomNameText.GetComponent<TMP_Text>().text = room.Name;
+            roomPlayersText.GetComponent<TMP_Text>().text = room.PlayerCount + "/" + room.MaxPlayers;
+            joinRoomButton.GetComponent<Button>().onClick.AddListener(() => OnJoinRoomButtonClicked(room.Name));
 
             roomListGameobjects.Add(room.Name, roomListEntryGameobject);
         }
@@ -367,9 +378,14 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
 
     void ClearRoomListView()
     {
+        if (roomListGameobjects == null) return;
+
         foreach (var roomListGameobject in roomListGameobjects.Values)
         {
-            Destroy(roomListGameobject);
+            if (roomListGameobject != null)
+            {
+                Destroy(roomListGameobject);
+            }
         }
 
         roomListGameobjects.Clear();
