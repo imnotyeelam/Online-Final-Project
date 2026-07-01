@@ -39,6 +39,10 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
     public GameObject roomListEntryPrefab;
     public GameObject roomListParentGameobject;
 
+    [Header("Player Card Colors")]
+    public Color myPlayerColor = new Color(0.1f, 0.6f, 0.8f, 0.8f);
+    public Color otherPlayerColor = new Color(0.08f, 0.08f, 0.08f, 0.6f);
+
     private Dictionary<string, RoomInfo> cachedRoomList;
     private Dictionary<string, GameObject> roomListGameobjects;
     private Dictionary<int, GameObject> playerListGameobjects;
@@ -147,10 +151,15 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
 
     public void OnStartGameButtonClicked()
     {
-        if (PhotonNetwork.IsMasterClient)
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        if (PhotonNetwork.CurrentRoom.PlayerCount < 4)
         {
-            PhotonNetwork.LoadLevel("GameScene");
+            Debug.Log("Need 4 players to start.");
+            return;
         }
+
+        PhotonNetwork.LoadLevel("GameScene");
     }
 
     public void SelectCharacter1()
@@ -192,9 +201,9 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
         Debug.Log(PhotonNetwork.LocalPlayer.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name);
         ActivatePanel(InsideRoom_UI_Panel.name);
 
-        startGameButton.SetActive(PhotonNetwork.LocalPlayer.IsMasterClient);
+        UpdateStartButton();
 
-        roomInfoText.text = "Room name: " + PhotonNetwork.CurrentRoom.Name + " " +
+        roomInfoText.text = "Room name: " + PhotonNetwork.CurrentRoom.Name + "\n" +
                             "Players/Max.players: " +
                             PhotonNetwork.CurrentRoom.PlayerCount + "/" +
                             PhotonNetwork.CurrentRoom.MaxPlayers;
@@ -217,8 +226,15 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
             playerListGameobject.transform.Find("PlayerNameText")
                 .GetComponent<TMP_Text>().text = player.NickName;
 
-            playerListGameobject.transform.Find("PlayerIndicator").gameObject
-                .SetActive(player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
+            bool isMe = player.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber;
+
+            Image cardBg = playerListGameobject.GetComponent<Image>();
+            if (cardBg != null)
+            {
+                cardBg.color = isMe ? myPlayerColor : otherPlayerColor;
+            }
+
+            playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(isMe);
 
             playerListGameobjects.Add(player.ActorNumber, playerListGameobject);
         }
@@ -242,10 +258,19 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
         playerListGameobject.transform.Find("PlayerNameText")
             .GetComponent<TMP_Text>().text = newPlayer.NickName;
 
-        playerListGameobject.transform.Find("PlayerIndicator").gameObject
-            .SetActive(newPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber);
+        bool isMe = newPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber;
+
+        Image cardBg = playerListGameobject.GetComponent<Image>();
+        if (cardBg != null)
+        {
+            cardBg.color = isMe ? myPlayerColor : otherPlayerColor;
+        }
+
+        playerListGameobject.transform.Find("PlayerIndicator").gameObject.SetActive(isMe);
 
         playerListGameobjects.Add(newPlayer.ActorNumber, playerListGameobject);
+
+        UpdateStartButton();
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
@@ -258,6 +283,8 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
 
         Destroy(playerListGameobjects[otherPlayer.ActorNumber].gameObject);
         playerListGameobjects.Remove(otherPlayer.ActorNumber);
+
+        UpdateStartButton();
     }
     public override void OnLeftRoom()
     {
@@ -389,6 +416,15 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
         }
 
         roomListGameobjects.Clear();
+    }
+
+    void UpdateStartButton()
+    {
+        bool canStart =
+            PhotonNetwork.IsMasterClient &&
+            PhotonNetwork.CurrentRoom.PlayerCount == 4;
+
+        startGameButton.SetActive(canStart);
     }
 
     #endregion

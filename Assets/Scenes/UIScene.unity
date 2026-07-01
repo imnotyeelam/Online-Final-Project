@@ -669,6 +669,8 @@ MonoBehaviour:
   RoomList_UI_Panel: {fileID: 4336538532532766841}
   roomListEntryPrefab: {fileID: 841278376669109242, guid: 1b50ba566761f6c42bf8b3c775911a8d, type: 3}
   roomListParentGameobject: {fileID: 4336538532149810032}
+  myPlayerColor: {r: 0.5411765, g: 1, b: 0.9058824, a: 0.6156863}
+  otherPlayerColor: {r: 0.4165056, g: 0.4433962, b: 0.4378802, a: 0.89411765}
 --- !u!4 &118292775
 Transform:
   m_ObjectHideFlags: 0
@@ -7877,7 +7879,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.00004610309, y: 0.000003058689}
+  m_AnchoredPosition: {x: -0.00004610309, y: 0.000035779416}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!224 &4336538532532766840
@@ -8048,7 +8050,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 4336538533092200357}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999489
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
