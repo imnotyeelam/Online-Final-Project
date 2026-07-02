@@ -110,7 +110,7 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
         }
 
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 4;
+        roomOptions.MaxPlayers = 2;//**********************
 
         PhotonNetwork.CreateRoom(roomName, roomOptions);
     }
@@ -153,7 +153,7 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient) return;
 
-        if (PhotonNetwork.CurrentRoom.PlayerCount < 4)
+        if (PhotonNetwork.CurrentRoom.PlayerCount < 2)//**********
         {
             Debug.Log("Need 4 players to start.");
             return;
@@ -422,7 +422,7 @@ public class yl_NetworkManager : MonoBehaviourPunCallbacks
     {
         bool canStart =
             PhotonNetwork.IsMasterClient &&
-            PhotonNetwork.CurrentRoom.PlayerCount == 4;
+            PhotonNetwork.CurrentRoom.PlayerCount == 2;//********
 
         startGameButton.SetActive(canStart);
     }
