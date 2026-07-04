@@ -1,18 +1,18 @@
 using UnityEngine;
 
-public class yl_GuidanceExample : MonoBehaviour
+public class yl_GuidanceText : MonoBehaviour
 {
     void Start()
     {
         yl_HUDGuidanceManager.Instance.SetGuidance(
 
-@"[V] Hold to use Walkie Talkie
+        @"[V] Hold to use Walkie Talkie
 
-[Q] Switch Inventory
+        [Q] Switch Inventory
 
-[TAB] View Tasks
+        [TAB] View Tasks
 
-[ESC] Pause");
+        [ESC] Pause");
 
     }
 
@@ -20,9 +20,7 @@ public class yl_GuidanceExample : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            yl_HUDGuidanceManager.Instance.ShowInteractionHint(
-
-"Press [E] to Open Door");
+            yl_HUDGuidanceManager.Instance.ShowInteractionHint("Press [E] to Open Door");
         }
 
         if (Input.GetKeyUp(KeyCode.E))
