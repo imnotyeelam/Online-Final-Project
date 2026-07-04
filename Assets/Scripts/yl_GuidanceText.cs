@@ -5,15 +5,11 @@ public class yl_GuidanceText : MonoBehaviour
     void Start()
     {
         yl_HUDGuidanceManager.Instance.SetGuidance(
-
-        @"[V] Hold to use Walkie Talkie
-
-        [Q] Switch Inventory
-
-        [TAB] View Tasks
-
-        [ESC] Pause");
-
+            "[V] Hold to use Walkie Talkie\n" +
+            "[Q] Switch Inventory\n" +
+            "[TAB] View Tasks\n" +
+            "[ESC] Pause"
+        );
     }
 
     void Update()
